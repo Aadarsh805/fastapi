@@ -1,27 +1,65 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-app = FastAPI()
-
-class Msg(BaseModel):
-    msg: str
+import json
+import snscrape.modules.twitter as sntwitter
+import pandas as pd
+import sys
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World. Welcome to FastAPI!"}
+def main(username: str):
+    query = f'(#100daysofcode) (from:{username}) until:2023-01-20 since:2018-12-01'
+    tweets = []
+    limit = 5000
+    for tweet in sntwitter.TwitterSearchScraper(query).get_items():
+        if len(tweets) == limit:
+            break
+        else:
+            tweets.append({"date": tweet.date.strftime("%Y-%m-%d %H:%M:%S"),
+                           "username": tweet.user.username, "content": tweet.content})
+    df = pd.DataFrame(tweets)
+    # Convert the dataframe to json
+    data = df.to_json()
+    # json_data = json.dumps(data)
+    print(data)
+    # print the json data to the standard output
+    # sys.stdout.write(data)
+    # sys.stdout.flush()
 
 
-@app.get("/path")
-async def demo_get():
-    return {"message": "This is /path endpoint, use a post request to transform the text to uppercase"}
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
+    else:
+        print('username is required')
 
 
-@app.post("/path")
-async def demo_post(inp: Msg):
-    return {"message": inp.msg.upper()}
+# import json
+# import snscrape.modules.twitter as sntwitter
+# import pandas as pd
+# import sys
 
 
-@app.get("/path/{path_id}")
-async def demo_get_path_id(path_id: int):
-    return {"message": f"This is /path/{path_id} endpoint, use post request to retrieve result"}
+# def main(username: str):
+#     query = f'(#100daysofcode) (from:{username}) until:2023-01-20 since:2018-12-01'
+#     tweets = []
+#     limit = 5
+#     print(username)
+#     for tweet in sntwitter.TwitterSearchScraper(query).get_items():
+#         if len(tweets) == limit:
+#             break
+#         else:
+#             tweets.append({"date": tweet.date.strftime("%Y-%m-%d %H:%M:%S"),
+#                            "username": tweet.user.username, "content": tweet.content})
+#     df = pd.DataFrame(tweets)
+#     # Convert the dataframe to json
+#     data = df.to_json()
+#     # json_data = json.dumps(data)
+#     print(type(data), 'fff')
+#     # print the json data to the standard output
+#     print(data)
+
+
+# if __name__ == '__main__':
+#     import sys
+#     if len(sys.argv) > 1:
+#         main(sys.argv[1])
+#     else:
+#         print('username is required')
